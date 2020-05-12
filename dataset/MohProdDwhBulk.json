@@ -1,0 +1,25 @@
+{
+	"name": "MohProdDwhBulk",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MOH_synapse_PROD_BI",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"cw_table": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": {
+				"value": "@dataset().cw_table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

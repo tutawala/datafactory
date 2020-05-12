@@ -1,0 +1,260 @@
+{
+	"name": "Copy_Bulk_Incremental_LA",
+	"properties": {
+		"activities": [
+			{
+				"name": "LookupTableNamesAndUpsertColumns",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": "select tableName,UpsertColumnName,TimeStampColumn from  Integration.IncrementalParameters",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "MohProdDwhGeneric",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "IncrementalLoadForEachTable",
+				"description": "Loop through all tables in Incremental Parameters table and execute the incremental table pipeline ",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupTableNamesAndUpsertColumns",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupTableNamesAndUpsertColumns').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "ExecCopyBulkIncremental",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "incremental",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"tableName": {
+										"value": "@item().tableName",
+										"type": "Expression"
+									},
+									"UpsertColumnName": {
+										"value": "@item().UpsertColumnName",
+										"type": "Expression"
+									},
+									"TimeStampColumn": {
+										"value": "@item().TimeStampColumn",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "sp_MigrateStagedTableAndUpsert_LOOPED1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "IncrementalLoadForEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_MigrateStagedTableAndUpsert_LOOPED]",
+					"storedProcedureParameters": {
+						"BatchID": {
+							"value": "1",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "sp_MigrateStagedTableAndUpsert_LOOPED2",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "IncrementalLoadForEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_MigrateStagedTableAndUpsert_LOOPED]",
+					"storedProcedureParameters": {
+						"BatchID": {
+							"value": "2",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "sp_MigrateStagedTableAndUpsert_LOOPED3",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "IncrementalLoadForEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_MigrateStagedTableAndUpsert_LOOPED]",
+					"storedProcedureParameters": {
+						"BatchID": {
+							"value": "3",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "sp_MigrateStagedTableAndUpsert_LOOPED4",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "IncrementalLoadForEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_MigrateStagedTableAndUpsert_LOOPED]",
+					"storedProcedureParameters": {
+						"BatchID": {
+							"value": "4",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "RefreshDataModel",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "sp_MigrateStagedTableAndUpsert_LOOPED1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "sp_MigrateStagedTableAndUpsert_LOOPED2",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "sp_MigrateStagedTableAndUpsert_LOOPED3",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "sp_MigrateStagedTableAndUpsert_LOOPED4",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-36.westeurope.logic.azure.com:443/workflows/1fab1d154aa04acfb1eeb94fe54a8664/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=3ett1vzHD-z-TI75Mu88u1__qYI4xtjTTX2ndl3gCA4",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

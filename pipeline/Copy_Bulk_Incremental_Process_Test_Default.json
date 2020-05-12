@@ -1,0 +1,173 @@
+{
+	"name": "Copy_Bulk_Incremental_Process_Test_Default",
+	"properties": {
+		"activities": [
+			{
+				"name": "LookupTableNamesAndUpsertColumns",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": "select tableName,UpsertColumnName,TimeStampColumn from  Integration.IncrementalParameters where batch_id=3",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "MohProdDwhGeneric",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "IncrementalLoadForEachTable",
+				"description": "Loop through all tables in Incremental Parameters table and execute the incremental table pipeline ",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupTableNamesAndUpsertColumns",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupTableNamesAndUpsertColumns').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "ExecCopyBulkIncremental",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "incremental",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"tableName": {
+										"value": "@item().tableName",
+										"type": "Expression"
+									},
+									"UpsertColumnName": {
+										"value": "@item().UpsertColumnName",
+										"type": "Expression"
+									},
+									"TimeStampColumn": {
+										"value": "@item().TimeStampColumn",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "sp_MigrateStagedTableAndUpsert_LOOPED3",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "IncrementalLoadForEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_MigrateStagedTableAndUpsert_LOOPED]",
+					"storedProcedureParameters": {
+						"BatchID": {
+							"value": "3",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "RefreshDataModel",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "sp_MigrateStagedTableAndUpsert_LOOPED3",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://s2events.azure-automation.net/webhooks?token=t4Yl0lVMj2YdNoDu9xvF4Mzfti69SC4ZxQquR4mU%2bOw%3d",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"AnalysisServicesDatabaseName": "COVID19MOH",
+						"AnalysisServicesServer": "asazure://westeurope.asazure.windows.net/mohanalysisprod",
+						"DatabaseRefreshType": "Automatic"
+					}
+				}
+			},
+			{
+				"name": "ClearDataModel",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://s2events.azure-automation.net/webhooks?token=K5aT3winTxAKZfx5mxjIQ9m9lPUd78DY7Cx%2bjl4W49U%3d",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"AnalysisServicesDatabaseName": "COVID19MOH",
+						"AnalysisServicesServer": "asazure://westeurope.asazure.windows.net/mohanalysisprod",
+						"DatabaseRefreshType": "ClearValues"
+					}
+				}
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

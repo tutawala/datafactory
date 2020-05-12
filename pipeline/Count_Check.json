@@ -1,0 +1,160 @@
+{
+	"name": "Count_Check",
+	"properties": {
+		"activities": [
+			{
+				"name": "Src_People_Count_Lookup",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select count(*) from dbo.people",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "MohAppDbGeneric",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Dwh_People_Count_Lookup",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select count(*) from dbo.people",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "MohAppDbGeneric",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "SrcCount",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Src_People_Count_Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "SrcCount",
+					"value": {
+						"value": "@activity('Src_People_Count_Lookup').output",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "DwhCount",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Dwh_People_Count_Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DwhCount",
+					"value": {
+						"value": "@activity('Dwh_People_Count_Lookup').output",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Stored Procedure1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "SrcCount",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "DwhCount",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_CompareCounts]",
+					"storedProcedureParameters": {
+						"DwhCount": {
+							"value": {
+								"value": "@int(variables('DwhCount'))",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"SourceCount": {
+							"value": {
+								"value": "@int(variables('SrcCount'))",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"TableName": {
+							"value": "people",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"variables": {
+			"SrcCount": {
+				"type": "String"
+			},
+			"DwhCount": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

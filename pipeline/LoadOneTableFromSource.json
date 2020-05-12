@@ -1,0 +1,51 @@
+{
+	"name": "LoadOneTableFromSource",
+	"properties": {
+		"description": "Load a table from source to a specified target table",
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "SqlDWSink"
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_shs",
+						"type": "DatasetReference",
+						"parameters": {
+							"cw_table": "dbo.people"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_shs",
+						"type": "DatasetReference",
+						"parameters": {
+							"cw_table": "staging.tempPeple"
+						}
+					}
+				]
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

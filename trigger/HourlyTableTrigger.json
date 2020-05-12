@@ -1,0 +1,35 @@
+{
+	"name": "HourlyTableTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipeline": {
+			"pipelineReference": {
+				"referenceName": "REP_MOH_DASHBOARD_HOURLY",
+				"type": "PipelineReference"
+			}
+		},
+		"type": "TumblingWindowTrigger",
+		"typeProperties": {
+			"frequency": "Hour",
+			"interval": 1,
+			"startTime": "2020-05-06T23:45:00Z",
+			"delay": "00:00:00",
+			"maxConcurrency": 1,
+			"retryPolicy": {
+				"intervalInSeconds": 30
+			},
+			"dependsOn": [
+				{
+					"type": "TumblingWindowTriggerDependencyReference",
+					"size": "0.00:14:00",
+					"offset": "-0.00:15:00",
+					"referenceTrigger": {
+						"referenceName": "BulkIncrementalTrigger",
+						"type": "TriggerReference"
+					}
+				}
+			]
+		}
+	}
+}

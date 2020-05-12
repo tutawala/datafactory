@@ -1,0 +1,16 @@
+{
+	"name": "MOH_synapse_PROD_BI",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"connectionString": "integrated security=False;encrypt=True;connection timeout=30;data source=moh-synapse-prod.database.windows.net;initial catalog=moh-prod-BI;user id=DataFactory",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIxNTk0MTkyYy1jOTc1LTQxZDEtOTRjYi0xMzQ2ODNjMGQ5OGUiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "Data-Factory-VM-IR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

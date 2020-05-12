@@ -1,0 +1,76 @@
+{
+	"name": "Bulk_Truncate_Table_Automate",
+	"properties": {
+		"activities": [
+			{
+				"name": "lkp_GetTableName",
+				"description": "Get table name for truncate reload tables",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": "select tableName from Integration.BulkTruncateParameters",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "MohProdDwhGeneric",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "TruncateLoadForEachTable",
+				"description": "Loop through all tables in Bulk Parameters table and execute the Truncate reload table pipeline ",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lkp_GetTableName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lkp_GetTableName').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "execTruncateReloadTable",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Bulk_Truncate_Table",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"tableName": {
+										"value": "@item().tableName\n",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

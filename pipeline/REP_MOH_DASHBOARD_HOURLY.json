@@ -1,0 +1,29 @@
+{
+	"name": "REP_MOH_DASHBOARD_HOURLY",
+	"properties": {
+		"activities": [
+			{
+				"name": "REP_MOH_DASHBOARD_HOURLY",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_REP_MOH_DASHBOARD_HOURLY]"
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

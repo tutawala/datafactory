@@ -1,0 +1,26 @@
+{
+	"name": "SourceDataset_3xt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ZuzarLaptop_LS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation",
+				"fileName": {
+					"value": "@concat(formatDateTime(getPastTime(1,'Day'),'yyyyMMdd'),'.csv')",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"rowDelimiter": "\n",
+			"escapeChar": "\\",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
