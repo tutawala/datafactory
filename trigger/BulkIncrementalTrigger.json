@@ -2,7 +2,7 @@
 	"name": "BulkIncrementalTrigger",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Started",
+		"runtimeState": "Stopped",
 		"pipeline": {
 			"pipelineReference": {
 				"referenceName": "Copy_Bulk_Incremental",
