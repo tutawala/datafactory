@@ -11,7 +11,7 @@
 			"location": {
 				"type": "FileServerLocation",
 				"fileName": {
-					"value": "@",
+					"value": "20200517.csv",
 					"type": "Expression"
 				}
 			},
