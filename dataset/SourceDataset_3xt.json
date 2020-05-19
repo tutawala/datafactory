@@ -11,7 +11,7 @@
 			"location": {
 				"type": "FileServerLocation",
 				"fileName": {
-					"value": "@concat(formatDateTime(getPastTime(1,'Day'),'yyyyMMdd'),'.csv')",
+					"value": "@",
 					"type": "Expression"
 				}
 			},
@@ -20,7 +20,8 @@
 			"escapeChar": "\\",
 			"firstRowAsHeader": false,
 			"quoteChar": "\""
-		}
+		},
+		"schema": []
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"
 }
