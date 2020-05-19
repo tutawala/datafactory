@@ -1,0 +1,13 @@
+{
+	"name": "MohProdDwhGeneric",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MOH_synapse_PROD_BI",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

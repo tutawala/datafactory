@@ -1,0 +1,327 @@
+{
+	"name": "Bulk_Truncate_Table",
+	"properties": {
+		"description": "Main Pipeline to handle truncate/inserts for every table passed through the bulk truncate pipeline",
+		"activities": [
+			{
+				"name": "LookupOldETLCutoff",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": {
+							"value": "SELECT CutOffTime\nFROM Integration.ETLCutoff\nWhere TableName = '@{pipeline().parameters.tableName}'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "DestinationDataset_shs",
+						"type": "DatasetReference",
+						"parameters": {
+							"cw_table": "integration.etlcutoff"
+						}
+					}
+				}
+			},
+			{
+				"name": "sp_InsertIntoLineageTable",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "LookupOldETLCutoff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_InsertIntoIntegrationLineage]",
+					"storedProcedureParameters": {
+						"CutOffTime": {
+							"value": {
+								"value": "@activity('LookupOldETLCutoff').output.firstRow.CutOffTime",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"DataLoadStartTime": {
+							"value": {
+								"value": "@utcnow()",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": {
+								"value": "@pipeline().parameters.tableName",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LookupNewETLCutoff",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp_InsertIntoLineageTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": {
+							"value": "SELECT MAX(DataLoadStartTime) as CutOffTime From Integration.Lineage where TableName ='@{pipeline().parameters.tableName}' and DataLoadEndTime is null",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "DestinationDataset_shs",
+						"type": "DatasetReference",
+						"parameters": {
+							"cw_table": "Integration.Lineage"
+						}
+					}
+				}
+			},
+			{
+				"name": "CopyTruncate",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "OldETLCutOff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "NewETLCutOff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "TableName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select * from @{variables('TableName')}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "SqlDWSink",
+						"preCopyScript": {
+							"value": "IF OBJECT_ID(N'@{variables('TableName')}', N'U') IS NOT NULL\n        BEGIN\n            TRUNCATE TABLE @{variables('TableName')}\n        END",
+							"type": "Expression"
+						},
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "MohAppDbGeneric",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "MohProdDwhBulk",
+						"type": "DatasetReference",
+						"parameters": {
+							"cw_table": {
+								"value": "@split(variables('TableName'),'.')[1]",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "OldETLCutOff",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LookupNewETLCutoff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "OldETLCutOff",
+					"value": {
+						"value": "@activity('LookupOldETLCutoff').output.firstRow.CutOffTime",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "NewETLCutOff",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LookupNewETLCutoff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "NewETLCutOff",
+					"value": {
+						"value": "@activity('LookupNewETLCutoff').output.firstRow.CutOffTime",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "TableName",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LookupNewETLCutoff",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TableName",
+					"value": {
+						"value": "@pipeline().parameters.tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "sp_UpdateLineage",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "CopyTruncate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_UpdateLineage]",
+					"storedProcedureParameters": {
+						"CutOffTime": {
+							"value": {
+								"value": "@variables('NewETLCutOff')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": {
+								"value": "@variables('TableName')",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "MOH_synapse_PROD_BI",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"tableName": {
+				"type": "string"
+			},
+			"UpsertColumnName": {
+				"type": "string"
+			},
+			"TimeStampColumn": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"TableName": {
+				"type": "String"
+			},
+			"UpsertColumnName": {
+				"type": "String"
+			},
+			"OldETLCutOff": {
+				"type": "String"
+			},
+			"NewETLCutOff": {
+				"type": "String"
+			},
+			"TimeStampColumn": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,6 @@
+{
+	"name": "Data-Factory-VM-IR",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

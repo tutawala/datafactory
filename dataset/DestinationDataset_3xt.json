@@ -1,0 +1,42 @@
+{
+	"name": "DestinationDataset_3xt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "mohcdr_synapse_destination",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "dateTimeOrigination",
+				"type": "datetimeoffset",
+				"precision": 255,
+				"scale": 7
+			},
+			{
+				"name": "callingPartyNumber",
+				"type": "nvarchar",
+				"precision": 255,
+				"scale": 255
+			},
+			{
+				"name": "calledPartyNumber",
+				"type": "nvarchar",
+				"precision": 255,
+				"scale": 255
+			},
+			{
+				"name": "callDuration",
+				"type": "int",
+				"precision": 10,
+				"scale": 255
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "moh_cdr"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

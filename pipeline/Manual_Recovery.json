@@ -1,0 +1,124 @@
+{
+	"name": "Manual_Recovery",
+	"properties": {
+		"description": "Manual Recovery pipeline. Takes source table name as parameter, then copies all the data from source to staging.[tablenamewithschema]",
+		"activities": [
+			{
+				"name": "CopyIncremental",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "TableName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select * from @{variables('TableName')}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "SqlDWSink",
+						"preCopyScript": {
+							"value": "IF OBJECT_ID(N'[Staging].[@{replace(variables('TableName'),'.','')}]', N'U') IS NOT NULL\n        BEGIN\n            TRUNCATE TABLE [Staging].[@{replace(variables('TableName'),'.','')}]\n        END",
+							"type": "Expression"
+						},
+						"allowPolyBase": true,
+						"polyBaseSettings": {
+							"rejectValue": 0,
+							"rejectType": "value",
+							"useTypeDefault": false
+						},
+						"disableMetricsCollection": false
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "StagingServiceLs",
+							"type": "LinkedServiceReference"
+						},
+						"path": ""
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "MohAppDbGeneric",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "MohProdDwhIncremental",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "@variables('TableName')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "TableName",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TableName",
+					"value": {
+						"value": "@pipeline().parameters.tableName",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"tableName": {
+				"type": "string",
+				"defaultValue": "dbo.people"
+			},
+			"UpsertColumnName": {
+				"type": "string",
+				"defaultValue": "civil_id"
+			},
+			"TimeStampColumn": {
+				"type": "string",
+				"defaultValue": "last_seen"
+			}
+		},
+		"variables": {
+			"TableName": {
+				"type": "String"
+			},
+			"UpsertColumnName": {
+				"type": "String"
+			},
+			"OldETLCutOff": {
+				"type": "String"
+			},
+			"NewETLCutOff": {
+				"type": "String"
+			},
+			"TimeStampColumn": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

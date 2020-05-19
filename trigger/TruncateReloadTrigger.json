@@ -1,0 +1,24 @@
+{
+	"name": "TruncateReloadTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Bulk_Truncate_Table_Automate",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 60,
+				"startTime": "2020-04-18T13:05:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

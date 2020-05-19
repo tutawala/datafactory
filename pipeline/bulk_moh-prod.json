@@ -1,0 +1,2754 @@
+{
+	"name": "bulk_moh-prod",
+	"properties": {
+		"description": "Bulk Load for all tables in source with drop and recreate table option",
+		"activities": [
+			{
+				"name": "ForEach_shs",
+				"description": "",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.cw_items",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy_shs",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [
+								{
+									"name": "Source",
+									"value": "dbo.@{item().source.table}"
+								},
+								{
+									"name": "Destination",
+									"value": "dbo.@{item().destination.table}"
+								}
+							],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource"
+								},
+								"sink": {
+									"type": "SqlDWSink",
+									"preCopyScript": {
+										"value": "@{concat('IF  OBJECT_ID(''',item().destination.table,''') is not null drop table ',item().destination.table)}",
+										"type": "Expression"
+									},
+									"tableOption": "autoCreate",
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"value": "@item().copyActivity.translator",
+									"type": "Expression"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "MohAppDbBulk",
+									"type": "DatasetReference",
+									"parameters": {
+										"cw_table": "@item().source.table"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "MohProdDwhBulk",
+									"type": "DatasetReference",
+									"parameters": {
+										"cw_table": {
+											"value": "@item().destination.table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"cw_items": {
+				"type": "Array",
+				"defaultValue": [
+					{
+						"source": {
+							"table": "addresses"
+						},
+						"destination": {
+							"table": "addresses"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[addresses]', 'U') IS NULL CREATE TABLE [dbo].[addresses] ([id] int,\n[latitude] decimal(16,14),\n[longitude] decimal(16,14),\n[street] nvarchar(255),\n[block] nvarchar(255),\n[building] nvarchar(255),\n[avenue] nvarchar(255),\n[floor] nvarchar(255),\n[apartment] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[area_id] int,\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "latitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "latitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "longitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "longitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "street",
+											"type": "String"
+										},
+										"sink": {
+											"name": "street",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "block",
+											"type": "String"
+										},
+										"sink": {
+											"name": "block",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "building",
+											"type": "String"
+										},
+										"sink": {
+											"name": "building",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "avenue",
+											"type": "String"
+										},
+										"sink": {
+											"name": "avenue",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "floor",
+											"type": "String"
+										},
+										"sink": {
+											"name": "floor",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "apartment",
+											"type": "String"
+										},
+										"sink": {
+											"name": "apartment",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "area_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "area_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "admins"
+						},
+						"destination": {
+							"table": "admins"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[admins]', 'U') IS NULL CREATE TABLE [dbo].[admins] ([id] int,\n[name] nvarchar(255),\n[email] nvarchar(255),\n[phone] nvarchar(255),\n[password] nvarchar(255),\n[group] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "email",
+											"type": "String"
+										},
+										"sink": {
+											"name": "email",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "phone",
+											"type": "String"
+										},
+										"sink": {
+											"name": "phone",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "password",
+											"type": "String"
+										},
+										"sink": {
+											"name": "password",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "group",
+											"type": "String"
+										},
+										"sink": {
+											"name": "group",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "app_permissions"
+						},
+						"destination": {
+							"table": "app_permissions"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[app_permissions]', 'U') IS NULL CREATE TABLE [dbo].[app_permissions] ([id] int,\n[permission] nvarchar(255),\n[status] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "permission",
+											"type": "String"
+										},
+										"sink": {
+											"name": "permission",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "status",
+											"type": "String"
+										},
+										"sink": {
+											"name": "status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "areas"
+						},
+						"destination": {
+							"table": "areas"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[areas]', 'U') IS NULL CREATE TABLE [dbo].[areas] ([id] int,\n[name] nvarchar(255),\n[name_ar] nvarchar(255),\n[latitude] decimal(16,14),\n[longitude] decimal(16,14),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[governorate_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "name_ar",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name_ar",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "latitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "latitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "longitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "longitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "governorate_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "governorate_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_in_meta"
+						},
+						"destination": {
+							"table": "check_in_meta"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_in_meta]', 'U') IS NULL CREATE TABLE [dbo].[check_in_meta] ([id] int,\n[meta_key] nvarchar(255),\n[meta_value] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[check_in_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "meta_key",
+											"type": "String"
+										},
+										"sink": {
+											"name": "meta_key",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "meta_value",
+											"type": "String"
+										},
+										"sink": {
+											"name": "meta_value",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_in_schedules"
+						},
+						"destination": {
+							"table": "check_in_schedules"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_in_schedules]', 'U') IS NULL CREATE TABLE [dbo].[check_in_schedules] ([id] int,\n[schedule_time] datetimeoffset(7),\n[check_in_type_id] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int,\n[check_in_strategy_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "schedule_time",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "schedule_time",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_type_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_type_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_in_strategies"
+						},
+						"destination": {
+							"table": "check_in_strategies"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_in_strategies]', 'U') IS NULL CREATE TABLE [dbo].[check_in_strategies] ([id] int,\n[name] nvarchar(255),\n[minimum_time] time(7),\n[maximum_time] time(7),\n[frequency] int,\n[minimum_interval] int,\n[maximum_interval] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_time",
+											"type": "TimeSpan"
+										},
+										"sink": {
+											"name": "minimum_time",
+											"type": "TimeSpan"
+										}
+									},
+									{
+										"source": {
+											"name": "maximum_time",
+											"type": "TimeSpan"
+										},
+										"sink": {
+											"name": "maximum_time",
+											"type": "TimeSpan"
+										}
+									},
+									{
+										"source": {
+											"name": "frequency",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "frequency",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_interval",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_interval",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "maximum_interval",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "maximum_interval",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_in_types"
+						},
+						"destination": {
+							"table": "check_in_types"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_in_types]', 'U') IS NULL CREATE TABLE [dbo].[check_in_types] ([id] int,\n[name] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_in_validations"
+						},
+						"destination": {
+							"table": "check_in_validations"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_in_validations]', 'U') IS NULL CREATE TABLE [dbo].[check_in_validations] ([id] int,\n[notes] nvarchar(255),\n[result] bit,\n[confidence] decimal(6,5),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[check_in_id] int,\n[admin_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "notes",
+											"type": "String"
+										},
+										"sink": {
+											"name": "notes",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "result",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "result",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "confidence",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "confidence",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "admin_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "admin_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "check_ins"
+						},
+						"destination": {
+							"table": "check_ins"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[check_ins]', 'U') IS NULL CREATE TABLE [dbo].[check_ins] ([id] int,\n[check_in_time] datetimeoffset(7),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[check_in_schedule_id] int,\n[admin_id] int,\n[location_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_time",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "check_in_time",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_schedule_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_schedule_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "admin_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "admin_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "contact_traces"
+						},
+						"destination": {
+							"table": "contact_traces"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[contact_traces]', 'U') IS NULL CREATE TABLE [dbo].[contact_traces] ([id] int,\n[bluetooth_rssi] int,\n[time] datetimeoffset(7),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int,\n[other_person_id] int,\n[location_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "bluetooth_rssi",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "bluetooth_rssi",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "time",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "time",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "other_person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "other_person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "devices"
+						},
+						"destination": {
+							"table": "devices"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[devices]', 'U') IS NULL CREATE TABLE [dbo].[devices] ([id] int,\n[is_active] bit,\n[manufacturer] nvarchar(255),\n[model] nvarchar(255),\n[platform] nvarchar(255),\n[serial] nvarchar(255),\n[uuid] nvarchar(255),\n[version] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "is_active",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "is_active",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "manufacturer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "manufacturer",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "model",
+											"type": "String"
+										},
+										"sink": {
+											"name": "model",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "platform",
+											"type": "String"
+										},
+										"sink": {
+											"name": "platform",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "serial",
+											"type": "String"
+										},
+										"sink": {
+											"name": "serial",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "uuid",
+											"type": "String"
+										},
+										"sink": {
+											"name": "uuid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "version",
+											"type": "String"
+										},
+										"sink": {
+											"name": "version",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "governorates"
+						},
+						"destination": {
+							"table": "governorates"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[governorates]', 'U') IS NULL CREATE TABLE [dbo].[governorates] ([id] int,\n[name] nvarchar(255),\n[name_ar] nvarchar(255),\n[latitude] decimal(16,14),\n[longitude] decimal(16,14),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "name_ar",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name_ar",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "latitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "latitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "longitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "longitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "location_group_details"
+						},
+						"destination": {
+							"table": "location_group_details"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[location_group_details]', 'U') IS NULL CREATE TABLE [dbo].[location_group_details] ([id] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[location_group_id] int,\n[location_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "location_group_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_group_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "location_groups"
+						},
+						"destination": {
+							"table": "location_groups"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[location_groups]', 'U') IS NULL CREATE TABLE [dbo].[location_groups] ([id] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "locations"
+						},
+						"destination": {
+							"table": "locations"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[locations]', 'U') IS NULL CREATE TABLE [dbo].[locations] ([id] int,\n[speed] nvarchar(255),\n[longitude] decimal(16,14),\n[floor] nvarchar(255),\n[latitude] decimal(16,14),\n[accuracy] nvarchar(255),\n[altitude_accuracy] nvarchar(255),\n[altitude] nvarchar(255),\n[is_moving] bit,\n[event] nvarchar(255),\n[odometer] nvarchar(255),\n[uuid] nvarchar(255),\n[activity_type] nvarchar(255),\n[activity_confidence] nvarchar(255),\n[battery_level] nvarchar(255),\n[battery_is_charging] nvarchar(255),\n[timestamp] datetimeoffset(7),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "speed",
+											"type": "String"
+										},
+										"sink": {
+											"name": "speed",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "longitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "longitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "floor",
+											"type": "String"
+										},
+										"sink": {
+											"name": "floor",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "latitude",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "latitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "accuracy",
+											"type": "String"
+										},
+										"sink": {
+											"name": "accuracy",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "altitude_accuracy",
+											"type": "String"
+										},
+										"sink": {
+											"name": "altitude_accuracy",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "altitude",
+											"type": "String"
+										},
+										"sink": {
+											"name": "altitude",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "is_moving",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "is_moving",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "event",
+											"type": "String"
+										},
+										"sink": {
+											"name": "event",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "odometer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "odometer",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "uuid",
+											"type": "String"
+										},
+										"sink": {
+											"name": "uuid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "activity_type",
+											"type": "String"
+										},
+										"sink": {
+											"name": "activity_type",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "activity_confidence",
+											"type": "String"
+										},
+										"sink": {
+											"name": "activity_confidence",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "battery_level",
+											"type": "String"
+										},
+										"sink": {
+											"name": "battery_level",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "battery_is_charging",
+											"type": "String"
+										},
+										"sink": {
+											"name": "battery_is_charging",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "timestamp",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "timestamp",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "o_t_ps"
+						},
+						"destination": {
+							"table": "o_t_ps"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[o_t_ps]', 'U') IS NULL CREATE TABLE [dbo].[o_t_ps] ([id] int,\n[code] nvarchar(255),\n[attempt] nvarchar(255),\n[expiry] datetimeoffset(7),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "code",
+											"type": "String"
+										},
+										"sink": {
+											"name": "code",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "attempt",
+											"type": "String"
+										},
+										"sink": {
+											"name": "attempt",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "expiry",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "expiry",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "people"
+						},
+						"destination": {
+							"table": "people"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[people]', 'U') IS NULL CREATE TABLE [dbo].[people] ([id] int,\n[name] nvarchar(255),\n[name_ar] nvarchar(255),\n[email] nvarchar(255),\n[civil_id] nvarchar(255),\n[home_phone] nvarchar(255),\n[mobile_phone] nvarchar(255),\n[serial_number] nvarchar(255),\n[gender] nvarchar(255),\n[nationality] nvarchar(255),\n[language] nvarchar(2),\n[date_of_birth] datetimeoffset(7),\n[severity] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[check_in_strategy_id] int,\n[last_seen] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "name_ar",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name_ar",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "email",
+											"type": "String"
+										},
+										"sink": {
+											"name": "email",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "civil_id",
+											"type": "String"
+										},
+										"sink": {
+											"name": "civil_id",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "home_phone",
+											"type": "String"
+										},
+										"sink": {
+											"name": "home_phone",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "mobile_phone",
+											"type": "String"
+										},
+										"sink": {
+											"name": "mobile_phone",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "serial_number",
+											"type": "String"
+										},
+										"sink": {
+											"name": "serial_number",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "gender",
+											"type": "String"
+										},
+										"sink": {
+											"name": "gender",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "nationality",
+											"type": "String"
+										},
+										"sink": {
+											"name": "nationality",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "language",
+											"type": "String"
+										},
+										"sink": {
+											"name": "language",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "date_of_birth",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "date_of_birth",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "severity",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "severity",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "last_seen",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "last_seen",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "person_meta"
+						},
+						"destination": {
+							"table": "person_meta"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[person_meta]', 'U') IS NULL CREATE TABLE [dbo].[person_meta] ([id] int,\n[meta_key] nvarchar(255),\n[meta_value] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "meta_key",
+											"type": "String"
+										},
+										"sink": {
+											"name": "meta_key",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "meta_value",
+											"type": "String"
+										},
+										"sink": {
+											"name": "meta_value",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "person_status_types"
+						},
+						"destination": {
+							"table": "person_status_types"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[person_status_types]', 'U') IS NULL CREATE TABLE [dbo].[person_status_types] ([id] int,\n[name] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "person_statuses"
+						},
+						"destination": {
+							"table": "person_statuses"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[person_statuses]', 'U') IS NULL CREATE TABLE [dbo].[person_statuses] ([id] int,\n[from] datetimeoffset(7),\n[to] datetimeoffset(7),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int,\n[status_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "from",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "from",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "to",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "to",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "status_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "status_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "strategy_check_in_types"
+						},
+						"destination": {
+							"table": "strategy_check_in_types"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[strategy_check_in_types]', 'U') IS NULL CREATE TABLE [dbo].[strategy_check_in_types] ([check_in_strategy_id] int,\n[check_in_type_id] int,\n[enabled_days] nvarchar(255),\n[max_per_day] int,\n[max_per_week] int,\n[intervals] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7));\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_strategy_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_type_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_type_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "enabled_days",
+											"type": "String"
+										},
+										"sink": {
+											"name": "enabled_days",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "max_per_day",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "max_per_day",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "max_per_week",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "max_per_week",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "intervals",
+											"type": "String"
+										},
+										"sink": {
+											"name": "intervals",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "symptoms"
+						},
+						"destination": {
+							"table": "symptoms"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[symptoms]', 'U') IS NULL CREATE TABLE [dbo].[symptoms] ([id] int,\n[temperature] decimal(5,3),\n[thermometer_source] nvarchar(255),\n[has_thermometer] bit,\n[fever] bit,\n[dry_cough] bit,\n[wet_cough] bit,\n[shortness_of_breath] bit,\n[difficulty_breathing] bit,\n[tiredness] bit,\n[diarrhea] bit,\n[headache] bit,\n[runny_nose] bit,\n[sore_throat] bit,\n[patient_notes] nvarchar(255),\n[admin_notes] nvarchar(255),\n[status] nvarchar(255),\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int,\n[admin_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "temperature",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "temperature",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "thermometer_source",
+											"type": "String"
+										},
+										"sink": {
+											"name": "thermometer_source",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "has_thermometer",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "has_thermometer",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "fever",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "fever",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "dry_cough",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "dry_cough",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "wet_cough",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "wet_cough",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "shortness_of_breath",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "shortness_of_breath",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "difficulty_breathing",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "difficulty_breathing",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "tiredness",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "tiredness",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "diarrhea",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "diarrhea",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "headache",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "headache",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "runny_nose",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "runny_nose",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "sore_throat",
+											"type": "Boolean"
+										},
+										"sink": {
+											"name": "sore_throat",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "patient_notes",
+											"type": "String"
+										},
+										"sink": {
+											"name": "patient_notes",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "admin_notes",
+											"type": "String"
+										},
+										"sink": {
+											"name": "admin_notes",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "status",
+											"type": "String"
+										},
+										"sink": {
+											"name": "status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "admin_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "admin_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "violation_history"
+						},
+						"destination": {
+							"table": "violation_history"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[violation_history]', 'U') IS NULL CREATE TABLE [dbo].[violation_history] ([id] int,\n[notes] nvarchar(255),\n[status] nvarchar(255),\n[assigned_admin_id] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[violation_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "notes",
+											"type": "String"
+										},
+										"sink": {
+											"name": "notes",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "status",
+											"type": "String"
+										},
+										"sink": {
+											"name": "status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "assigned_admin_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "assigned_admin_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "violation_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "violation_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"source": {
+							"table": "violations"
+						},
+						"destination": {
+							"table": "violations"
+						},
+						"copySink": {
+							"preCopyScript": "BEGIN TRY\nIF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'dbo') EXEC('Create Schema [dbo]');\nEND TRY\nBEGIN CATCH\nif ERROR_NUMBER() <> 2714 throw;\nEND CATCH\n\nIF OBJECT_ID('[dbo].[violations]', 'U') IS NULL CREATE TABLE [dbo].[violations] ([id] int,\n[violation_type] nvarchar(255),\n[notes] nvarchar(255),\n[status] nvarchar(255),\n[assigned_admin_id] int,\n[force_check_in_schedule_id] int,\n[created_at] datetimeoffset(7),\n[updated_at] datetimeoffset(7),\n[person_id] int,\n[location_group_id] int,\n[check_in_id] int,\n[location_id] int,\n[symptom_id] int,\n[check_in_schedule_id] int);\n"
+						},
+						"copyActivity": {
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "violation_type",
+											"type": "String"
+										},
+										"sink": {
+											"name": "violation_type",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "notes",
+											"type": "String"
+										},
+										"sink": {
+											"name": "notes",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "status",
+											"type": "String"
+										},
+										"sink": {
+											"name": "status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "assigned_admin_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "assigned_admin_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "force_check_in_schedule_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "force_check_in_schedule_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"name": "person_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "person_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_group_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_group_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "location_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "symptom_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "symptom_id",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "check_in_schedule_id",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "check_in_schedule_id",
+											"type": "Int32"
+										}
+									}
+								]
+							}
+						}
+					}
+				]
+			}
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
